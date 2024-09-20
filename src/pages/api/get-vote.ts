@@ -1,14 +1,21 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { openDB } from "../../lib/db";
+import { validate as isUuid } from "uuid";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
   const { id } = req.query;
+
+  if (!isUuid(id as string)) {
+    return res.status(400).json({ message: "Invalid ID format" });
+  }
+
   const db = await openDB();
 
   // Lấy thông tin cuộc vote
+  //SELECT * FROM votes WHERE id = 4fe31dac-4799-410d-b823-aa666f3b3108
   const vote = await db.get(`SELECT * FROM votes WHERE id = ?`, [id]);
 
   if (vote) {

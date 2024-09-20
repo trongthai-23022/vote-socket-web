@@ -10,7 +10,7 @@ export default async function handler(
   // Tạo bảng votes để lưu thông tin cuộc vote
   await db.exec(`
     CREATE TABLE IF NOT EXISTS votes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id TEXT PRIMARY KEY,
       title TEXT NOT NULL
     )
   `);

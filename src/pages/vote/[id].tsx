@@ -41,6 +41,7 @@ const VotePage = () => {
       const res = await fetch(`/api/get-vote?id=${voteId}`);
       const data = await res.json();
       setVoteData(data);
+      console.log("Vote data", data);
     } catch (error) {
       console.error("Failed to fetch vote data", error);
     }

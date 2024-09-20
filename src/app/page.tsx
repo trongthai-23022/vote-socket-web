@@ -44,7 +44,7 @@ const Home = () => {
           <label className="block mb-2">Title</label>
           <input
             type="text"
-            className="border border-gray-300 p-2 rounded w-full"
+            className="border border-gray-300 p-2 rounded w-full text-black"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
@@ -56,7 +56,7 @@ const Home = () => {
             <label className="block mb-2">Option {index + 1}</label>
             <input
               type="text"
-              className="border border-gray-300 p-2 rounded w-full"
+              className="border border-gray-300 p-2 rounded w-full text-black"
               value={option}
               onChange={(e) => handleOptionChange(index, e.target.value)}
               required
