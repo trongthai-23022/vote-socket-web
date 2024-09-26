@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import useUserStore from "./store/user";
 
 const Home = () => {
   const [title, setTitle] = useState("");
   const [options, setOptions] = useState(["", ""]);
   const router = useRouter();
+  const name = useUserStore((state) => state.name);
 
   const handleAddOption = () => {
     setOptions([...options, ""]);
@@ -37,7 +39,7 @@ const Home = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
       <h1 className="text-2xl font-bold mb-4 ring-teal-500">
-        Create a New Vote
+        Hi {name}, Create a New Vote
       </h1>
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div>
