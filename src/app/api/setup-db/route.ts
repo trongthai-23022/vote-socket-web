@@ -1,5 +1,5 @@
+import { openDB } from "@/app/lib/db";
 import { NextApiRequest, NextApiResponse } from "next";
-import { openDB } from "../../lib/db";
 
 export default async function handler(
   req: NextApiRequest,

@@ -1,88 +1,48 @@
 "use client";
 
-import { useState } from "react";
+import React, { use, useRef } from "react";
+import { Input } from "@/app/components/ui/input";
+import { Button } from "@/app/components/ui/button";
 import { useRouter } from "next/navigation";
 import useUserStore from "./store/user";
 
-const Home = () => {
-  const [title, setTitle] = useState("");
-  const [options, setOptions] = useState(["", ""]);
+const Login = () => {
   const router = useRouter();
-  const name = useUserStore((state) => state.name);
-
-  const handleAddOption = () => {
-    setOptions([...options, ""]);
+  const name = useRef("");
+  const handleLogin = () => {
+    router.push("/create-vote");
+    useUserStore.getState().setName(name.current);
   };
-
-  const handleOptionChange = (index: number, value: string) => {
-    const newOptions = [...options];
-    newOptions[index] = value;
-    setOptions(newOptions);
-  };
-
-  const handleSubmit = async (e: any) => {
-    e.preventDefault();
-    const res = await fetch("/api/create-vote", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ title, options }),
-    });
-
-    const data = await res.json();
-    if (data.id) {
-      router.push(`/vote/${data.id}`);
-    }
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    name.current = e.target.value;
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      <h1 className="text-2xl font-bold mb-4 ring-teal-500">
-        Hi {name}, Create a New Vote
-      </h1>
-      <form className="space-y-4" onSubmit={handleSubmit}>
-        <div>
-          <label className="block mb-2">Title</label>
-          <input
-            type="text"
-            className="border border-gray-300 p-2 rounded w-full text-black"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
+    <div className="text-black flex items-center justify-center bg-gradient-to-b from-[#a1d3ee] from-0% via-[#a1d5ed] via-20% to-[#e7f4fe] to-71% w-full h-screen">
+      <div className="form w-[350px] h-[400px] rounded-2xl bg-gradient-to-b from-[#adebfae0] from-0% via-[#fcfcfc] via-40% to-[#ffffff] to-71% shadow-lg p-6 flex flex-col">
+        <h1 className="text-3xl font-extrabold text-center mb-4 text-[#333]">
+          Welcome to the <br />
+          <span className="text-[#0070f3]">Vote for Fun</span>
+        </h1>
+        <p className="text-center text-sm text-[#666] mb-6">
+          Please enter your name to continue
+        </p>
+        <div className="flex-grow flex items-center justify-center flex-col gap-5">
+          <Input
+            className="bg-[#ebedf0a2] border-none h-[50px] text-base"
+            placeholder="What the fuck is your name?"
+            onChange={handleNameChange}
           />
+          <Button
+            className="w-full rounded-xl text-lg h-[40px] bg-black"
+            onClick={handleLogin}
+          >
+            Let's go
+          </Button>
         </div>
-
-        {options.map((option, index) => (
-          <div key={index}>
-            <label className="block mb-2">Option {index + 1}</label>
-            <input
-              type="text"
-              className="border border-gray-300 p-2 rounded w-full text-black"
-              value={option}
-              onChange={(e) => handleOptionChange(index, e.target.value)}
-              required
-            />
-          </div>
-        ))}
-
-        <button
-          type="button"
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-          onClick={handleAddOption}
-        >
-          Add Option
-        </button>
-
-        <button
-          type="submit"
-          className="bg-green-500 text-white px-4 py-2 rounded"
-        >
-          Create Vote
-        </button>
-      </form>
+      </div>
     </div>
   );
 };
 
-export default Home;
+export default Login;

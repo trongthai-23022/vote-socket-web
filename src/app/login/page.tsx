@@ -1,8 +1,8 @@
 "use client";
 
 import React, { use, useRef } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Input } from "@/app/components/ui/input";
+import { Button } from "@/app/components/ui/button";
 import { useRouter } from "next/navigation";
 import useUserStore from "../store/user";
 
@@ -10,13 +10,12 @@ const Login = () => {
   const router = useRouter();
   const name = useRef("");
   const handleLogin = () => {
-    router.push("/");
+    router.push("/create-vote");
     useUserStore.getState().setName(name.current);
-
   };
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    name.current = e.target.value;  
-  }
+    name.current = e.target.value;
+  };
 
   return (
     <div className="text-black flex items-center justify-center bg-gradient-to-b from-[#a1d3ee] from-0% via-[#a1d5ed] via-20% to-[#e7f4fe] to-71% w-full h-screen">

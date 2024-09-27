@@ -2,7 +2,15 @@ import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 import { Bar } from "react-chartjs-2";
 import io, { Socket } from "socket.io-client";
-import { Chart, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+import {
+  Chart,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
 
 // Đăng ký các thành phần cần thiết của Chart.js
 Chart.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
@@ -21,9 +29,8 @@ interface VoteData {
 
 let socket: Socket;
 
-const VotePage = () => {
-  const router = useRouter();
-  const { id } = router.query;
+const VotePage = ({ params }: { params: { slug: string } }) => {
+  const id = params.slug;
   const [voteData, setVoteData] = useState<VoteData | null>(null);
 
   useEffect(() => {
@@ -101,19 +108,19 @@ const VotePage = () => {
   }
 
   const data = {
-    labels: voteData.options.map(option => option.option),
+    labels: voteData.options.map((option) => option.option),
     datasets: [
       {
-        label: 'Votes',
-        data: voteData.options.map(option => option.votes),
+        label: "Votes",
+        data: voteData.options.map((option) => option.votes),
         backgroundColor: voteData.options.map((_, index) => {
           const colors = [
-            'rgba(75, 192, 192, 0.6)',
-            'rgba(255, 99, 132, 0.6)',
-            'rgba(54, 162, 235, 0.6)',
-            'rgba(255, 206, 86, 0.6)',
-            'rgba(153, 102, 255, 0.6)',
-            'rgba(255, 159, 64, 0.6)',
+            "rgba(75, 192, 192, 0.6)",
+            "rgba(255, 99, 132, 0.6)",
+            "rgba(54, 162, 235, 0.6)",
+            "rgba(255, 206, 86, 0.6)",
+            "rgba(153, 102, 255, 0.6)",
+            "rgba(255, 159, 64, 0.6)",
           ];
           return colors[index % colors.length];
         }),
@@ -121,12 +128,12 @@ const VotePage = () => {
         borderWidth: 2,
         borderColor: voteData.options.map((_, index) => {
           const borderColors = [
-            'rgba(75, 192, 192, 1)',
-            'rgba(255, 99, 132, 1)',
-            'rgba(54, 162, 235, 1)',
-            'rgba(255, 206, 86, 1)',
-            'rgba(153, 102, 255, 1)',
-            'rgba(255, 159, 64, 1)',
+            "rgba(75, 192, 192, 1)",
+            "rgba(255, 99, 132, 1)",
+            "rgba(54, 162, 235, 1)",
+            "rgba(255, 206, 86, 1)",
+            "rgba(153, 102, 255, 1)",
+            "rgba(255, 159, 64, 1)",
           ];
           return borderColors[index % borderColors.length];
         }),
@@ -136,24 +143,24 @@ const VotePage = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
-    <h1 className="text-4xl font-extrabold mb-6 text-indigo-600 ring-offset-indigo-700 ">
-      {voteData.title}
-    </h1>
-    <div className="w-full max-w-lg">
-      <Bar data={data} />
+      <h1 className="text-4xl font-extrabold mb-6 text-indigo-600 ring-offset-indigo-700 ">
+        {voteData.title}
+      </h1>
+      <div className="w-full max-w-lg">
+        <Bar data={data} />
+      </div>
+      <div className="flex space-x-4 mt-4">
+        {voteData.options.map((option, index) => (
+          <button
+            key={option.id}
+            onClick={() => handleVote(index)}
+            className="bg-blue-500 text-white px-4 py-2 rounded"
+          >
+            {option.option} ({option.votes} votes)
+          </button>
+        ))}
+      </div>
     </div>
-    <div className="flex space-x-4 mt-4">
-      {voteData.options.map((option, index) => (
-        <button
-          key={option.id}
-          onClick={() => handleVote(index)}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
-        >
-          {option.option} ({option.votes} votes)
-        </button>
-      ))}
-    </div>
-  </div>
   );
 };
 
