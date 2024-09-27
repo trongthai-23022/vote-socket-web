@@ -1,10 +1,7 @@
 import { openDB } from "@/app/lib/db";
-import { NextApiRequest, NextApiResponse } from "next";
+import { NextRequest, NextResponse } from "next/server";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export async function GET(req: NextRequest, res: NextResponse) {
   const db = await openDB();
 
   // Tạo bảng votes để lưu thông tin cuộc vote
@@ -26,5 +23,5 @@ export default async function handler(
     )
   `);
 
-  res.status(200).json({ message: "Database setup complete" });
+  return Response.json({ message: "Database setup complete" }, { status: 200 });
 }

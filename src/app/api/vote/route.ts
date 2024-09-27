@@ -1,10 +1,7 @@
+import { openDB } from "@/app/lib/db";
 import { NextApiRequest, NextApiResponse } from "next";
-import { openDB } from "../lib/db";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export async function POST(req: NextApiRequest, res: NextApiResponse) {
   const { optionId } = req.body;
   const db = await openDB();
 
@@ -13,3 +10,5 @@ export default async function handler(
 
   res.status(200).json({ message: "Vote updated" });
 }
+
+////// Phải dùng hàm xử lí rq trước

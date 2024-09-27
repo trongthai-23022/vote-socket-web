@@ -1,13 +1,13 @@
 import { Server } from "socket.io";
-import { NextApiRequest, NextApiResponse } from "next";
+import { NextRequest, NextResponse } from "next/server";
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  const socketServer = res.socket as any;
+export function GET(req: NextRequest, res: NextResponse) {
+  const socketServer = res as any;
 
   if (socketServer && socketServer.server && !socketServer.server.io) {
     const io = new Server(socketServer.server);
-    if (res.socket) {
-      (res.socket as any).server.io = io;
+    if (socketServer) {
+      (socketServer as any).server.io = io;
     }
 
     io.on("connection", (socket) => {
@@ -24,5 +24,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       "Socket.IO server already initialized or socket server not available."
     );
   }
-  res.end();
+
+  socketServer.end();
+  return Response.json(
+    { message: "Socket server setup complete" },
+    { status: 200 }
+  );
 }
