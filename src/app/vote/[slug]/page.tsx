@@ -1,4 +1,4 @@
-import { useRouter } from "next/router";
+"use client";
 import { useState, useEffect } from "react";
 import { Bar } from "react-chartjs-2";
 import io, { Socket } from "socket.io-client";
@@ -11,6 +11,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import path from "path";
 
 // Đăng ký các thành phần cần thiết của Chart.js
 Chart.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
@@ -27,17 +28,26 @@ interface VoteData {
   options: Option[];
 }
 
-let socket: Socket;
-
 const VotePage = ({ params }: { params: { slug: string } }) => {
   const id = params.slug;
   const [voteData, setVoteData] = useState<VoteData | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
-    if (id) {
-      fetchVoteData(id as string);
-      socketInitializer();
-    }
+    const socketInitializer = async () => {
+      await fetch("/api/socket");
+      const newSocket = io("/api/socket", {
+        path: "/api/socket", // Đường dẫn cho socket.io
+      });
+
+      newSocket.on("updateVote", (updatedVoteData) => {
+        setVoteData(updatedVoteData);
+      });
+
+      setSocket(newSocket);
+    };
+    fetchVoteData(id);
+    socketInitializer();
 
     return () => {
       if (socket) {
@@ -51,24 +61,15 @@ const VotePage = ({ params }: { params: { slug: string } }) => {
   const fetchVoteData = async (voteId: string) => {
     try {
       const res = await fetch(`/api/get-vote?id=${voteId}`);
-      const data = await res.json();
+      if (!res.ok) {
+        throw new Error("Failed to fetch vote data");
+      }
+      const data: VoteData = await res.json();
       setVoteData(data);
       console.log("Vote data", data);
     } catch (error) {
       console.error("Failed to fetch vote data", error);
     }
-  };
-
-  const socketInitializer = async () => {
-    await fetch("/api/socket");
-    socket = io();
-
-    socket.on("updateVote", (updatedVoteData: VoteData) => {
-      console.log("Received updated vote data", updatedVoteData);
-      if (updatedVoteData.id == id) {
-        setVoteData(updatedVoteData);
-      }
-    });
   };
 
   const handleVote = async (index: number) => {
@@ -91,13 +92,13 @@ const VotePage = ({ params }: { params: { slug: string } }) => {
         body: JSON.stringify({ optionId }),
       });
 
-      socket.emit("vote", updatedVoteData, (response: { status: string }) => {
-        if (response.status === "ok") {
-          console.log("Vote emitted successfully");
-        } else {
-          console.error("Failed to emit vote");
-        }
-      });
+      if (socket && socket.emit) {
+        socket.emit("vote", updatedVoteData);
+      } else {
+        console.error(
+          "Socket is not initialized or emit method is not available"
+        );
+      }
     } catch (error) {
       console.error("Failed to update vote data", error);
     }

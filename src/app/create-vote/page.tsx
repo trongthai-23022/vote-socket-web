@@ -27,7 +27,7 @@ const CreateVote = () => {
 
     try {
       const res = await axios.post(
-        "/create-vote",
+        "/api/create-vote",
         {
           title,
           options,
@@ -45,7 +45,7 @@ const CreateVote = () => {
       if (data.voteId) {
         router.push(`/vote/${data.voteId}`);
       }
-      console.log(data);
+      console.log("Vote created", data.id);
     } catch (error) {
       console.error("Failed to create vote", error);
     }

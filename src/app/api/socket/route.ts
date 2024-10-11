@@ -1,32 +1,34 @@
-import { Server } from "socket.io";
+import { Server as IOServer, Socket } from "socket.io";
 import { NextRequest, NextResponse } from "next/server";
+import { Server as HttpServer } from "http";
+import { initializeSocketServer } from "@/sockerServer";
 
-export function GET(req: NextRequest, res: NextResponse) {
-  const socketServer = res as any;
+interface SocketServer extends HttpServer {
+  io?: IOServer;
+}
 
-  if (socketServer && socketServer.server && !socketServer.server.io) {
-    const io = new Server(socketServer.server);
-    if (socketServer) {
-      (socketServer as any).server.io = io;
-    }
+interface SocketWithServer {
+  socket: {
+    server: SocketServer;
+  };
+}
 
-    io.on("connection", (socket) => {
-      // Lắng nghe sự kiện vote từ client
-      socket.on("vote", (voteData) => {
-        // Phát lại kết quả vote cho tất cả các client
-        io.emit("updateVote", voteData);
-      });
+export async function GET(req: NextRequest, res: any) {
+  const socketWithServer = res as SocketWithServer;
 
-      socket.on("disconnect", () => {});
-    });
-  } else {
-    console.log(
-      "Socket.IO server already initialized or socket server not available."
-    );
+  // Kiểm tra nếu socket server có sẵn
+  if (!socketWithServer.socket?.server) {
+    // Khởi tạo server nếu chưa có
+    socketWithServer.socket = {
+      server: new HttpServer(),
+    };
   }
 
-  socketServer.end();
-  return Response.json(
+  const { socket } = socketWithServer;
+
+  initializeSocketServer(socket.server);
+
+  return NextResponse.json(
     { message: "Socket server setup complete" },
     { status: 200 }
   );

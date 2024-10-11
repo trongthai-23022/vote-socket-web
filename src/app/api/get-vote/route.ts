@@ -1,15 +1,12 @@
-import { NextApiRequest, NextApiResponse } from "next";
+import { NextRequest, NextResponse } from "next/server";
 import { openDB } from "../../lib/db";
 import { validate as isUuid } from "uuid";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  const { id } = req.query;
+export async function GET(req: NextRequest, res: NextResponse) {
+  const id = req.nextUrl.searchParams.get("id");
 
   if (!isUuid(id as string)) {
-    return res.status(400).json({ message: "Invalid ID format" });
+    return NextResponse.json({ message: "Invalid ID format" }, { status: 400 });
   }
 
   const db = await openDB();
@@ -23,8 +20,8 @@ export default async function handler(
     const options = await db.all(`SELECT * FROM options WHERE vote_id = ?`, [
       id,
     ]);
-    res.status(200).json({ ...vote, options });
+    return NextResponse.json({ ...vote, options }, { status: 200 });
   } else {
-    res.status(404).json({ message: "Vote not found" });
+    return NextResponse.json({ message: "Vote not found" });
   }
 }

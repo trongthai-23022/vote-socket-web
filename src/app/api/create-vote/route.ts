@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { openDB } from "@/app/lib/db";
 import { v4 as uuidv4 } from "uuid";
+import { use } from "react";
 
 // Helper function to read stream
 async function readStream(stream: ReadableStream): Promise<string> {
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
   const { title, options } = JSON.parse(body);
   const db = await openDB();
   const voteId = uuidv4();
-
+  console.log("Creating vote with id:", voteId);
   try {
     // Lưu thông tin cuộc vote
     await db.run(`INSERT INTO votes (id, title) VALUES (?, ?)`, [
