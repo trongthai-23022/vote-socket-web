@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Bar } from "react-chartjs-2";
 import io, { Socket } from "socket.io-client";
 import {
@@ -11,9 +11,8 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import path from "path";
 
-// Đăng ký các thành phần cần thiết của Chart.js
+// Register necessary components of Chart.js
 Chart.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 interface Option {
@@ -31,73 +30,74 @@ interface VoteData {
 const VotePage = ({ params }: { params: { slug: string } }) => {
   const id = params.slug;
   const [voteData, setVoteData] = useState<VoteData | null>(null);
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    const socketInitializer = async () => {
-      await fetch("/api/socket");
-      const newSocket = io("/api/socket", {
-        path: "/api/socket", // Đường dẫn cho socket.io
+    const fetchVoteData = async (voteId: string) => {
+      try {
+        const res = await fetch(`/api/get-vote?id=${voteId}`);
+        if (!res.ok) {
+          throw new Error("Failed to fetch vote data");
+        }
+        const data: VoteData = await res.json();
+        setVoteData(data);
+        console.log("Vote data", data);
+      } catch (error) {
+        console.error("Failed to fetch vote data", error);
+      }
+    };
+
+    fetchVoteData(id);
+
+    if (!socketRef.current) {
+      socketRef.current = io("/api/socket", {
+        path: "/api/socket",
       });
 
-      newSocket.on("updateVote", (updatedVoteData) => {
+      socketRef.current.on("connect", () => {
+        console.log("Socket connected:", socketRef.current?.id);
+      });
+
+      socketRef.current.on("updateVote", (updatedVoteData) => {
+        console.log("Received updateVote event:", updatedVoteData);
         setVoteData(updatedVoteData);
       });
 
-      setSocket(newSocket);
-    };
-    fetchVoteData(id);
-    socketInitializer();
+      socketRef.current.on("disconnect", () => {
+        console.log("Socket disconnected");
+      });
+    }
 
     return () => {
-      if (socket) {
-        socket.disconnect();
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+        console.log("Socket disconnected on cleanup");
       }
     };
   }, [id]);
 
-  //Render the vote page when the vote data is updateVote socket event
-
-  const fetchVoteData = async (voteId: string) => {
-    try {
-      const res = await fetch(`/api/get-vote?id=${voteId}`);
-      if (!res.ok) {
-        throw new Error("Failed to fetch vote data");
-      }
-      const data: VoteData = await res.json();
-      setVoteData(data);
-      console.log("Vote data", data);
-    } catch (error) {
-      console.error("Failed to fetch vote data", error);
-    }
-  };
-
   const handleVote = async (index: number) => {
     if (!voteData) return;
 
-    const updatedOptions = voteData.options.map((option, i) => {
-      return i === index ? { ...option, votes: option.votes + 1 } : option;
-    });
-
+    const updatedOptions = voteData.options.map((option, i) =>
+      i === index ? { ...option, votes: option.votes + 1 } : option
+    );
     const updatedVoteData = { ...voteData, options: updatedOptions };
 
-    // Update vote data on the server
-    const optionId = voteData.options[index].id;
     try {
       await fetch("/api/vote", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ optionId }),
+        body: JSON.stringify({ optionId: voteData.options[index].id }),
       });
 
-      if (socket && socket.emit) {
-        socket.emit("vote", updatedVoteData);
+      if (socketRef.current && socketRef.current.connected) {
+        socketRef.current.emit("vote", updatedVoteData);
       } else {
-        console.error(
-          "Socket is not initialized or emit method is not available"
-        );
+        console.error("Socket is not connected");
       }
     } catch (error) {
       console.error("Failed to update vote data", error);
@@ -108,7 +108,7 @@ const VotePage = ({ params }: { params: { slug: string } }) => {
     return <p>Loading...</p>;
   }
 
-  const data = {
+  const chartData = {
     labels: voteData.options.map((option) => option.option),
     datasets: [
       {
@@ -144,11 +144,11 @@ const VotePage = ({ params }: { params: { slug: string } }) => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
-      <h1 className="text-4xl font-extrabold mb-6 text-indigo-600 ring-offset-indigo-700 ">
+      <h1 className="text-4xl font-extrabold mb-6 text-indigo-600 ring-offset-indigo-700">
         {voteData.title}
       </h1>
       <div className="w-full max-w-lg">
-        <Bar data={data} />
+        <Bar data={chartData} />
       </div>
       <div className="flex space-x-4 mt-4">
         {voteData.options.map((option, index) => (

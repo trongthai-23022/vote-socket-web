@@ -1,7 +1,7 @@
 import { Server as IOServer, Socket } from "socket.io";
 import { NextRequest, NextResponse } from "next/server";
 import { Server as HttpServer } from "http";
-import { initializeSocketServer } from "@/sockerServer";
+import { initializeSocketServer } from "@/lib/sockerServer";
 
 interface SocketServer extends HttpServer {
   io?: IOServer;
