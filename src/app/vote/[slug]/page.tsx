@@ -11,6 +11,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import Pusher from "pusher-js";
 
 // Register necessary components of Chart.js
 Chart.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
@@ -30,84 +31,74 @@ interface VoteData {
 const VotePage = ({ params }: { params: { slug: string } }) => {
   const id = params.slug;
   const [voteData, setVoteData] = useState<VoteData | null>(null);
-  const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    const fetchVoteData = async (voteId: string) => {
+    console.log('Khởi tạo Pusher với key:', process.env.NEXT_PUBLIC_PUSHER_KEY);
+    console.log('Cluster:', process.env.NEXT_PUBLIC_PUSHER_CLUSTER);
+
+    // Khởi tạo Pusher client
+    const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
+      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!
+    });
+
+    // Subscribe vào channel
+    const channel = pusher.subscribe('voting-channel');
+    console.log('Đã subscribe vào channel: voting-channel');
+    
+    // Lắng nghe sự kiện vote-updated
+    channel.bind('vote-updated', (data: any) => {
+      console.log('Nhận được sự kiện vote-updated:', data);
+      // Fetch lại dữ liệu mới nhất khi có cập nhật
+      fetchVoteData();
+    });
+
+    // Fetch dữ liệu ban đầu
+    const fetchVoteData = async () => {
+      console.log('Đang fetch dữ liệu ban đầu cho id:', id);
       try {
-        const res = await fetch(`/api/get-vote?id=${voteId}`);
-        if (!res.ok) {
-          throw new Error("Failed to fetch vote data");
-        }
-        const data: VoteData = await res.json();
+        const res = await fetch(`/api/get-vote?id=${id}`);
+        if (!res.ok) throw new Error("Failed to fetch vote data");
+        const data = await res.json();
+        console.log('Dữ liệu ban đầu:', data);
         setVoteData(data);
-        console.log("Vote data", data);
       } catch (error) {
-        console.error("Failed to fetch vote data", error);
+        console.error("Failed to fetch vote data:", error);
       }
     };
 
-    fetchVoteData(id);
+    fetchVoteData();
 
-    if (!socketRef.current) {
-      socketRef.current = io("/api/socket", {
-        path: "/api/socket",
-      });
-
-      socketRef.current.on("connect", () => {
-        console.log("Socket connected:", socketRef.current?.id);
-      });
-
-      socketRef.current.on("updateVote", (updatedVoteData) => {
-        console.log("Received updateVote event:", updatedVoteData);
-        setVoteData(updatedVoteData);
-      });
-
-      socketRef.current.on("disconnect", () => {
-        console.log("Socket disconnected");
-      });
-    }
-
+    // Cleanup
     return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
-        console.log("Socket disconnected on cleanup");
-      }
+      console.log('Cleanup: Hủy đăng ký channel');
+      channel.unbind_all();
+      channel.unsubscribe();
     };
   }, [id]);
 
   const handleVote = async (index: number) => {
     if (!voteData) return;
-
-    const updatedOptions = voteData.options.map((option, i) =>
-      i === index ? { ...option, votes: option.votes + 1 } : option
-    );
-    const updatedVoteData = { ...voteData, options: updatedOptions };
+    console.log('Xử lý vote cho option index:', index);
 
     try {
+      console.log('Gửi request vote với optionId:', voteData.options[index].id);
       await fetch("/api/vote", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ optionId: voteData.options[index].id }),
       });
-
-      if (socketRef.current && socketRef.current.connected) {
-        socketRef.current.emit("vote", updatedVoteData);
-      } else {
-        console.error("Socket is not connected");
-      }
+      console.log('Vote thành công');
     } catch (error) {
-      console.error("Failed to update vote data", error);
+      console.error("Failed to update vote:", error);
     }
   };
 
   if (!voteData) {
+    console.log('Đang loading dữ liệu...');
     return <p>Loading...</p>;
   }
 
+  console.log('Chuẩn bị render chart với dữ liệu:', voteData);
   const chartData = {
     labels: voteData.options.map((option) => option.option),
     datasets: [
