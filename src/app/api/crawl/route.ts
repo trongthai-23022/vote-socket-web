@@ -54,6 +54,9 @@ export async function GET(request: Request) {
       const price = $(element).find('.discountedPrice___3MBVA').text().trim();
       const imageUrl = $(element).find('img.realImage___2TyNE').attr('src');
 
+      console.log($);
+      
+
       if (name) {
         menuItems.push({
           name,

@@ -64,8 +64,12 @@ const ResultPage = ({ params }: { params: { slug: string } }) => {
     return <p>Loading...</p>;
   }
 
+  const truncateLabel = (label: string, maxLength: number) => {
+    return label.length > maxLength ? label.slice(0, maxLength) + '...' : label;
+  };
+
   const chartData = {
-    labels: voteData.options.map((option) => option.option),
+    labels: voteData.options.map((option) => truncateLabel(option.option, 30)),
     datasets: [
       {
         label: "Votes",
@@ -100,8 +104,11 @@ const ResultPage = ({ params }: { params: { slug: string } }) => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
-      <h1 className="text-4xl font-extrabold mb-6 text-indigo-600">
-        Kết quả: {voteData.title}
+      <h1 className="text-4xl font-bold mb-4 text-indigo-900">
+        Kết quả cuộc bình chọn
+      </h1>
+      <h1 className="text-4xl font-bold mb-6 text-indigo-600">
+         {voteData.title}
       </h1>
       <div className="w-full max-w-lg">
         <Bar data={chartData} />

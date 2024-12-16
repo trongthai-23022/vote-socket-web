@@ -1,8 +1,8 @@
 "use client";
 
 import React, { use, useRef } from "react";
-import { Input } from "@/app/components/ui/input";
-import { Button } from "@/app/components/ui/button";
+import Input from "@/app/components/ui/Input";
+import Button from "@/app/components/ui/Button";
 import { useRouter } from "next/navigation";
 import useUserStore from "./store/user";
 
@@ -10,7 +10,7 @@ const Login = () => {
   const router = useRouter();
   const name = useRef("");
   const handleLogin = () => {
-    router.push("/create-vote");
+    router.push("/create-vote-page");
     useUserStore.getState().setName(name.current);
   };
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -24,17 +24,17 @@ const Login = () => {
           Welcome to the <br />
           <span className="text-[#0070f3]">Vote for Fun</span>
         </h1>
-        <p className="text-center text-sm text-[#666] mb-6">
+        {/* <p className="text-center text-sm text-[#666] mb-6">
           Please enter your name to continue
-        </p>
+        </p> */}
         <div className="flex-grow flex items-center justify-center flex-col gap-5">
-          <Input
+          {/* <Input
             className="bg-[#ebedf0a2] border-none h-[50px] text-base"
             placeholder="What the fuck is your name?"
             onChange={handleNameChange}
-          />
+          /> */}
           <Button
-            className="w-full rounded-xl text-lg h-[40px] bg-black"
+            className="w-full rounded-xl text-lg bg-black text-white font-bold px-4"
             onClick={handleLogin}
           >
             Let's go
