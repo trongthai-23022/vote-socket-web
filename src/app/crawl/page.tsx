@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState } from "react";
 
 interface MenuItem {
   name: string;
@@ -9,7 +9,7 @@ interface MenuItem {
 }
 
 export default function CrawlPage() {
-  const [url, setUrl] = useState('');
+  const [url, setUrl] = useState("");
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,14 +23,14 @@ export default function CrawlPage() {
     try {
       const response = await fetch(`/api/crawl?url=${encodeURIComponent(url)}`);
       const data = await response.json();
-      
+
       if (response.ok) {
         setMenuItems(data.menuItems);
       } else {
-        setError(data.error || 'Có lỗi xảy ra khi lấy dữ liệu');
+        setError(data.error || "Có lỗi xảy ra khi lấy dữ liệu");
       }
     } catch (err) {
-      setError('Không thể kết nối đến server');
+      setError("Không thể kết nối đến server");
     } finally {
       setLoading(false);
     }
@@ -39,7 +39,7 @@ export default function CrawlPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Lấy Menu từ Grab Food</h1>
-      
+
       <form onSubmit={handleSubmit} className="mb-8">
         <div className="flex gap-4">
           <input
@@ -55,7 +55,7 @@ export default function CrawlPage() {
             disabled={loading}
             className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
           >
-            {loading ? 'Đang xử lý...' : 'Lấy Menu'}
+            {loading ? "Đang xử lý..." : "Lấy Menu"}
           </button>
         </div>
       </form>
@@ -74,13 +74,15 @@ export default function CrawlPage() {
 
       {menuItems.length > 0 && (
         <div>
-          <h2 className="text-2xl font-semibold mb-6">Kết quả ({menuItems.length} món)</h2>
+          <h2 className="text-2xl font-semibold mb-6">
+            Kết quả ({menuItems.length} món)
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {menuItems.map((item, index) => (
               <div key={index} className="border rounded-lg p-4 shadow-lg">
                 {item.imageUrl && (
-                  <img 
-                    src={item.imageUrl} 
+                  <img
+                    src={item.imageUrl}
                     alt={item.name}
                     className="w-full h-48 object-cover rounded-lg mb-4"
                   />
@@ -89,7 +91,9 @@ export default function CrawlPage() {
                 {item.description && (
                   <p className="text-gray-600 mb-2">{item.description}</p>
                 )}
-                <p className="text-lg font-bold text-indigo-600">{item.price}</p>
+                <p className="text-lg font-bold text-indigo-600">
+                  {item.price}
+                </p>
               </div>
             ))}
           </div>
@@ -103,4 +107,4 @@ export default function CrawlPage() {
       )}
     </div>
   );
-} 
+}

@@ -1,8 +1,8 @@
 "use client";
 
 import React, { use, useRef } from "react";
-import { Input } from "@/app/components/ui/Input";
-import { Button } from "@/app/components/ui/Button";
+import Input from "@/app/components/ui/Input";
+import Button from "@/app/components/ui/Button";
 import { useRouter } from "next/navigation";
 import useUserStore from "../store/user";
 
