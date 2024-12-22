@@ -2,6 +2,13 @@ import { NextResponse } from 'next/server';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 
+interface MenuItem {
+  name: string;
+  description: string;
+  price: string;
+  imageUrl: string;
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -45,7 +52,7 @@ export async function GET(request: Request) {
     console.log('Response data length:', response.data.length);
 
     const $ = cheerio.load(response.data);
-    const menuItems: any[] = [];
+    const menuItems: MenuItem[] = [];
 
     // Cập nhật selectors theo cấu trúc HTML mới nhất của Grab
     $('.menuItem___1HHmD').each((index, element) => {

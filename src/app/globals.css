@@ -2,6 +2,89 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Toggle switch styles */
+.toggle-switch {
+  @apply relative w-14 h-7 bg-gray-300 rounded-full shadow-inner transition-colors duration-300;
+}
+
+.toggle-switch[data-checked="true"] {
+  @apply bg-green-400;
+}
+
+.toggle-switch::after {
+  content: '';
+  @apply absolute left-1 top-1 w-5 h-5 bg-white rounded-full shadow transition-transform duration-300 ease-in-out;
+}
+
+.toggle-switch[data-checked="true"]::after {
+  @apply transform translate-x-7;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c7d2fe;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #818cf8;
+}
+
+/* Custom selection color */
+::selection {
+  background-color: #c7d2fe;
+  color: #312e81;
+}
+
+/* Custom focus styles */
+*:focus {
+  outline: none;
+}
+
+/* Custom input focus styles */
+input:focus, 
+button:focus {
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+/* Custom button hover effect */
+button {
+  transition: all 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
 body {
   font-family: Arial, Helvetica, sans-serif;
 }

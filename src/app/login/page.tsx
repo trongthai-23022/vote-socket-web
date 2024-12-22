@@ -1,48 +1,76 @@
 "use client";
 
-import React, { use, useRef } from "react";
+import React, { useRef } from "react";
 import Input from "@/app/components/ui/Input";
 import Button from "@/app/components/ui/Button";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import useUserStore from "../store/user";
 
-const Login = () => {
+export default function LoginPage() {
   const router = useRouter();
-  const name = useRef("");
+  const nameRef = useRef<string>("");
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams?.get("redirect") || "/create-vote-page";
+  
   const handleLogin = () => {
-    router.push("/create-vote");
-    useUserStore.getState().setName(name.current);
+    if (nameRef.current.trim()) {
+      useUserStore.getState().setName(nameRef.current);
+      router.push(redirectUrl);
+    }
   };
+
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    name.current = e.target.value;
+    nameRef.current = e.target.value;
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleLogin();
+    }
   };
 
   return (
-    <div className="text-black flex items-center justify-center bg-gradient-to-b from-[#a1d3ee] from-0% via-[#a1d5ed] via-20% to-[#e7f4fe] to-71% w-full h-screen">
-      <div className="form w-[350px] h-[400px] rounded-2xl bg-gradient-to-b from-[#adebfae0] from-0% via-[#fcfcfc] via-40% to-[#ffffff] to-71% shadow-lg p-6 flex flex-col">
-        <h1 className="text-3xl font-extrabold text-center mb-4 text-[#333]">
-          Welcome to the <br />
-          <span className="text-[#0070f3]">Vote for Fun</span>
-        </h1>
-        <p className="text-center text-sm text-[#666] mb-6">
-          Please enter your name to continue
-        </p>
-        <div className="flex-grow flex items-center justify-center flex-col gap-5">
-          <Input
-            className="bg-[#ebedf0a2] border-none h-[50px] text-base"
-            placeholder="What the fuck is your name?"
-            onChange={handleNameChange}
-          />
+    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 flex items-center justify-center px-4">
+      <div className="bg-white/80 backdrop-blur-sm p-8 rounded-xl shadow-lg max-w-md w-full animate-fadeIn">
+        <div className="text-center mb-8">
+          <div className="mb-4">
+            <svg className="w-16 h-16 text-indigo-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <h2 className="text-3xl font-bold text-gray-800 mb-2">Chào mừng!</h2>
+          <p className="text-gray-600">Vui lòng nhập tên của bạn để tiếp tục</p>
+        </div>
+        
+        <div className="space-y-6">
+          <div>
+            <Input
+              type="text"
+              placeholder="Nhập tên của bạn"
+              onChange={handleNameChange}
+              onKeyPress={handleKeyPress}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent shadow-sm transition-all duration-200"
+              required
+            />
+          </div>
+          
           <Button
-            className="w-full rounded-xl text-lg h-[40px] bg-black"
             onClick={handleLogin}
+            className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-3 rounded-lg hover:opacity-90 transition duration-200 font-semibold text-lg shadow-md flex items-center justify-center group"
           >
-            Let's go
+            <span>Tiếp tục</span>
+            <svg 
+              className="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform duration-200" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24" 
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+            </svg>
           </Button>
         </div>
       </div>
     </div>
   );
-};
-
-export default Login;
+}

@@ -11,24 +11,79 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import * as XLSX from 'xlsx';
+import saveAs from 'file-saver';
+import { VoteData } from "@/types";
+
+interface VoteResult {
+  option: string;
+  votes: number;
+  voters: string[];
+}
 
 Chart.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-interface Option {
-  id: string;
-  option: string;
-  votes: number;
-}
-
-interface VoteData {
-  id: string;
-  title: string;
-  options: Option[];
-}
-
-const ResultPage = ({ params }: { params: { slug: string } }) => {
-  const id = params.slug;
+export default function ResultPage({ params }: { params: { slug: string } }) {
+  const [voteResults, setVoteResults] = useState<VoteResult[]>([]);
   const [voteData, setVoteData] = useState<VoteData | null>(null);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = async (showLoading = true) => {
+    if (showLoading) {
+      setInitialLoading(true);
+    }
+    setError(null);
+
+    try {
+      // Fetch vote data
+      const [voteRes, resultsRes] = await Promise.all([
+        fetch(`/api/get-vote?id=${params.slug}`),
+        fetch(`/api/get-vote-results?id=${params.slug}`)
+      ]);
+
+      if (!voteRes.ok) {
+        throw new Error("Không thể tải thông tin bình chọn");
+      }
+
+      if (!resultsRes.ok) {
+        throw new Error("Không thể tải kết quả bình chọn");
+      }
+
+      const [voteDataResult, resultsData] = await Promise.all([
+        voteRes.json(),
+        resultsRes.json()
+      ]);
+
+      if (!voteDataResult) {
+        throw new Error("Không tìm thấy thông tin bình chọn");
+      }
+
+      setVoteData(voteDataResult);
+
+      // Transform data if needed
+      if (!resultsData) {
+        setVoteResults([]);
+        return;
+      }
+
+      // Chuyển đổi dữ liệu từ API thành định dạng VoteResult
+      const transformedResults: VoteResult[] = voteDataResult.options.map((option: any) => ({
+        option: option.option,
+        votes: resultsData[option.id]?.length || 0,
+        voters: resultsData[option.id] || []
+      }));
+
+      setVoteResults(transformedResults);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Có lỗi xảy ra");
+      console.error("Error fetching data:", err);
+    } finally {
+      if (showLoading) {
+        setInitialLoading(false);
+      }
+    }
+  };
 
   useEffect(() => {
     const pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
@@ -37,91 +92,175 @@ const ResultPage = ({ params }: { params: { slug: string } }) => {
 
     const channel = pusher.subscribe('voting-channel');
     
-    channel.bind('vote-updated', (data: any) => {
-      fetchVoteData();
+    channel.bind('vote-updated', () => {
+      // Không hiển thị loading khi update realtime
+      fetchData(false);
     });
 
-    const fetchVoteData = async () => {
-      try {
-        const res = await fetch(`/api/get-vote?id=${id}`);
-        if (!res.ok) throw new Error("Failed to fetch vote data");
-        const data = await res.json();
-        setVoteData(data);
-      } catch (error) {
-        console.error("Failed to fetch vote data:", error);
-      }
-    };
-
-    fetchVoteData();
+    // Chỉ hiển thị loading lần đầu load trang
+    fetchData(true);
 
     return () => {
       channel.unbind_all();
       channel.unsubscribe();
     };
-  }, [id]);
-
-  if (!voteData) {
-    return <p>Loading...</p>;
-  }
-
-  const truncateLabel = (label: string, maxLength: number) => {
-    return label.length > maxLength ? label.slice(0, maxLength) + '...' : label;
-  };
+  }, [params.slug]);
 
   const chartData = {
-    labels: voteData.options.map((option) => truncateLabel(option.option, 30)),
+    labels: voteResults.map(result => result.option),
     datasets: [
       {
-        label: "Votes",
-        data: voteData.options.map((option) => option.votes),
-        backgroundColor: voteData.options.map((_, index) => {
-          const colors = [
-            "rgba(75, 192, 192, 0.6)",
-            "rgba(255, 99, 132, 0.6)",
-            "rgba(54, 162, 235, 0.6)",
-            "rgba(255, 206, 86, 0.6)",
-            "rgba(153, 102, 255, 0.6)",
-            "rgba(255, 159, 64, 0.6)",
-          ];
-          return colors[index % colors.length];
-        }),
-        borderRadius: 10,
-        borderWidth: 2,
-        borderColor: voteData.options.map((_, index) => {
-          const borderColors = [
-            "rgba(75, 192, 192, 1)",
-            "rgba(255, 99, 132, 1)",
-            "rgba(54, 162, 235, 1)",
-            "rgba(255, 206, 86, 1)",
-            "rgba(153, 102, 255, 1)",
-            "rgba(255, 159, 64, 1)",
-          ];
-          return borderColors[index % borderColors.length];
-        }),
+        label: 'Số lượt bình chọn',
+        data: voteResults.map(result => result.votes),
+        backgroundColor: [
+          'rgba(99, 102, 241, 0.8)',   // Indigo
+          'rgba(167, 139, 250, 0.8)',  // Purple
+          'rgba(236, 72, 153, 0.8)',   // Pink
+          'rgba(248, 113, 113, 0.8)',  // Red
+          'rgba(251, 146, 60, 0.8)',   // Orange
+          'rgba(250, 204, 21, 0.8)',   // Yellow
+        ],
+        borderColor: [
+          'rgb(99, 102, 241)',
+          'rgb(167, 139, 250)',
+          'rgb(236, 72, 153)',
+          'rgb(248, 113, 113)',
+          'rgb(251, 146, 60)',
+          'rgb(250, 204, 21)',
+        ],
+        borderWidth: 1,
+        borderRadius: 8,
       },
     ],
   };
 
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      <h1 className="text-4xl font-bold mb-4 text-indigo-900">
-        Kết quả cuộc bình chọn
-      </h1>
-      <h1 className="text-4xl font-bold mb-6 text-indigo-600">
-         {voteData.title}
-      </h1>
-      <div className="w-full max-w-lg">
-        <Bar data={chartData} />
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      title: {
+        display: false,
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          stepSize: 1,
+        },
+      },
+    },
+  };
+
+  const exportToExcel = () => {
+    try {
+      const ws = XLSX.utils.json_to_sheet(
+        voteResults.map(result => ({
+          'Tùy chọn': result.option,
+          'Số lượt bình chọn': result.votes,
+          'Người bình chọn': result.voters.join(', ')
+        }))
+      );
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Kết quả bình chọn');
+      const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      saveAs(data, 'ket-qua-binh-chon.xlsx');
+    } catch (err) {
+      console.error("Error exporting to Excel:", err);
+      alert("Có lỗi khi xuất file Excel");
+    }
+  };
+
+  if (initialLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
       </div>
-      <div className="mt-8 space-y-2">
-        {voteData.options.map((option) => (
-          <div key={option.id} className="text-lg">
-            {option.option}: <span className="font-bold">{option.votes}</span> phiếu
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 flex items-center justify-center">
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-8 max-w-md mx-auto text-center">
+          <svg className="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Đã có lỗi xảy ra</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => fetchData(true)}
+            className="bg-indigo-500 text-white px-6 py-2 rounded-lg hover:bg-indigo-600 transition-colors duration-200"
+          >
+            Thử lại
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!voteData || voteResults.length === 0) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 flex items-center justify-center">
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-8 max-w-md mx-auto text-center">
+          <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 12H4" />
+          </svg>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Chưa có dữ liệu</h2>
+          <p className="text-gray-600">Chưa có ai tham gia bình chọn.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100">
+      <div className="container mx-auto px-4 py-8 animate-fadeIn">
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-8 max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-800 mb-4">{voteData.title}</h1>
+            <p className="text-gray-600">Tổng số lượt bình chọn: {voteResults.reduce((acc, curr) => acc + curr.votes, 0)}</p>
           </div>
-        ))}
+
+          <div className="mb-8">
+            <Bar data={chartData} options={chartOptions} />
+          </div>
+
+          <div className="space-y-6">
+            {voteResults.map((result, index) => (
+              <div key={index} className="bg-white rounded-lg shadow p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-800">{result.option}</h3>
+                  <span className="bg-indigo-100 text-indigo-800 py-1 px-3 rounded-full text-sm font-medium">
+                    {result.votes} lượt bình chọn
+                  </span>
+                </div>
+                {result.voters.length > 0 && (
+                  <div className="text-sm text-gray-600">
+                    <span className="font-medium">Người đã bình chọn:</span>{' '}
+                    {result.voters.join(', ')}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-8 flex justify-center">
+            <button
+              onClick={exportToExcel}
+              className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition-colors duration-200 font-medium flex items-center"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Xuất Excel
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
-};
-
-export default ResultPage; 
+} 

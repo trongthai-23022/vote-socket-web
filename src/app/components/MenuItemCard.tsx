@@ -1,5 +1,6 @@
 "use client";
 import React from 'react';
+import Image from 'next/image';
 
 interface MenuItem {
   name: string;
@@ -21,10 +22,12 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({ item, isSelected, onToggle 
       onClick={() => onToggle(item.name)}
     >
       {item.imageUrl && (
-        <img 
-          src={item.imageUrl} 
+        <Image 
+          src={item.imageUrl}
           alt={item.name}
-          className="w-full h-48 object-cover rounded-lg mb-4"
+          width={300}
+          height={200}
+          className="w-full h-48 object-cover rounded-t-lg"
         />
       )}
       <h3 className="text-xl font-semibold mb-2">{item.name}</h3>

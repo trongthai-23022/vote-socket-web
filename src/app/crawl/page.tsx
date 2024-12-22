@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Image from 'next/image';
 
 interface MenuItem {
   name: string;
@@ -29,8 +30,9 @@ export default function CrawlPage() {
       } else {
         setError(data.error || "Có lỗi xảy ra khi lấy dữ liệu");
       }
-    } catch (err) {
-      setError("Không thể kết nối đến server");
+    } catch (error: unknown) {
+      console.error('Error:', error);
+      setError('Có lỗi xảy ra');
     } finally {
       setLoading(false);
     }
@@ -81,10 +83,12 @@ export default function CrawlPage() {
             {menuItems.map((item, index) => (
               <div key={index} className="border rounded-lg p-4 shadow-lg">
                 {item.imageUrl && (
-                  <img
+                  <Image
                     src={item.imageUrl}
                     alt={item.name}
-                    className="w-full h-48 object-cover rounded-lg mb-4"
+                    width={300}
+                    height={200}
+                    className="w-full h-48 object-cover rounded-t-lg mb-4"
                   />
                 )}
                 <h3 className="text-xl font-semibold mb-2">{item.name}</h3>

@@ -1,27 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
-import { openDB } from "../../lib/db";
-import { validate as isUuid } from "uuid";
+import { supabase } from "@/lib/supabase";
 
-export async function GET(req: NextRequest, res: NextResponse) {
-  const id = req.nextUrl.searchParams.get("id");
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
 
-  if (!isUuid(id as string)) {
-    return NextResponse.json({ message: "Invalid ID format" }, { status: 400 });
-  }
+    if (!id) {
+      return NextResponse.json(
+        { error: "Missing vote ID" },
+        { status: 400 }
+      );
+    }
 
-  const db = await openDB();
+    // Lấy thông tin vote và options
+    const { data: vote, error: voteError } = await supabase
+      .from('votes')
+      .select(`
+        id,
+        title,
+        options (
+          id,
+          option,
+          votes
+        )
+      `)
+      .eq('id', id)
+      .single();
 
-  // Lấy thông tin cuộc vote
-  //SELECT * FROM votes WHERE id = 4fe31dac-4799-410d-b823-aa666f3b3108
-  const vote = await db.get(`SELECT * FROM votes WHERE id = ?`, [id]);
+    if (voteError) throw voteError;
 
-  if (vote) {
-    // Lấy các lựa chọn của cuộc vote
-    const options = await db.all(`SELECT * FROM options WHERE vote_id = ?`, [
-      id,
-    ]);
-    return NextResponse.json({ ...vote, options }, { status: 200 });
-  } else {
-    return NextResponse.json({ message: "Vote not found" });
+    return NextResponse.json(vote);
+  } catch (error) {
+    console.error("Failed to fetch vote:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch vote" },
+      { status: 500 }
+    );
   }
 }
