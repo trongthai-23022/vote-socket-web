@@ -1,10 +1,12 @@
 "use client";
 import { useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function CreateVoteResult() {
+function ResultContent() {
   const [copySuccess, setCopySuccess] = useState('');
   const searchParams = useSearchParams();
+  const router = useRouter();
   const id = searchParams ? searchParams.get("id") : '';
   const voteUrl = typeof window !== 'undefined' ? `${window.location.origin}/vote/${id}` : '';
 
@@ -28,12 +30,20 @@ export default function CreateVoteResult() {
           <div className="bg-gray-50 p-4 rounded-lg mb-6 break-all text-indigo-600 font-medium">
             {voteUrl}
           </div>
-          <button
-            onClick={copyLink}
-            className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-8 py-3 rounded-lg hover:opacity-90 transition duration-200 font-semibold text-lg shadow-md w-full"
-          >
-            {copySuccess || 'Sao chép liên kết'}
-          </button>
+          <div className="space-y-4">
+            <button
+              onClick={copyLink}
+              className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-8 py-3 rounded-lg hover:opacity-90 transition duration-200 font-semibold text-lg shadow-md w-full"
+            >
+              {copySuccess || 'Sao chép liên kết'}
+            </button>
+            <button
+              onClick={() => router.push(`/vote/${id}`)}
+              className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-8 py-3 rounded-lg transition duration-200 font-semibold text-lg shadow-md w-full"
+            >
+              Xem bình chọn
+            </button>
+          </div>
           {copySuccess && (
             <div className="mt-4 flex items-center justify-center text-green-500">
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -44,7 +54,18 @@ export default function CreateVoteResult() {
           )}
         </div>
       </div>
-
     </div>
+  );
+}
+
+export default function CreateVoteResult() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+      </div>
+    }>
+      <ResultContent />
+    </Suspense>
   );
 } 

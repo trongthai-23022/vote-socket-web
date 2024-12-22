@@ -1,31 +1,34 @@
 "use client";
-
-import React, { useRef } from "react";
-import Input from "@/app/components/ui/Input";
-import Button from "@/app/components/ui/Button";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import useUserStore from "../store/user";
+import { Suspense } from "react";
+import useUserStore from "@/app/store/user";
 
-export default function LoginPage() {
+function LoginContent() {
+  const [name, setName] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const nameRef = useRef<string>("");
   const searchParams = useSearchParams();
-  const redirectUrl = searchParams?.get("redirect") || "/create-vote-page";
-  
-  const handleLogin = () => {
-    if (nameRef.current.trim()) {
-      useUserStore.getState().setName(nameRef.current);
-      router.push(redirectUrl);
-    }
-  };
+  const redirectUrl = searchParams?.get("redirect") || "/create-vote";
+  const setUserName = useUserStore(state => state.setName);
 
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    nameRef.current = e.target.value;
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) {
+      setError("Vui lòng nhập tên của bạn");
+      return;
+    }
+
+    // Lưu tên vào store
+    setUserName(name.trim());
+    
+    // Chuyển hướng đến trang được yêu cầu
+    router.push(redirectUrl);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      handleLogin();
+      handleSubmit(e);
     }
   };
 
@@ -44,18 +47,25 @@ export default function LoginPage() {
         
         <div className="space-y-6">
           <div>
-            <Input
+            <input
               type="text"
-              placeholder="Nhập tên của bạn"
-              onChange={handleNameChange}
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent shadow-sm transition-all duration-200"
-              required
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition duration-200"
+              placeholder="Nhập tên của bạn..."
             />
           </div>
-          
-          <Button
-            onClick={handleLogin}
+
+          {error && (
+            <div className="bg-red-100 text-red-700 p-3 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+
+          <button
+            onClick={handleSubmit}
             className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-3 rounded-lg hover:opacity-90 transition duration-200 font-semibold text-lg shadow-md flex items-center justify-center group"
           >
             <span>Tiếp tục</span>
@@ -68,9 +78,21 @@ export default function LoginPage() {
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
             </svg>
-          </Button>
+          </button>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }
