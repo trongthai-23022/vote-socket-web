@@ -11,7 +11,8 @@ const VotePage = ({ params }: { params: { slug: string } }) => {
   const [voteData, setVoteData] = useState<VoteData | null>(null);
   const [copySuccess, setCopySuccess] = useState('');
   const userName = useUserStore(state => state.name);
-
+  const [isVoted, setIsVoted] = useState(false);
+  console.log(id);
   useEffect(() => {
     if (!userName) {
       router.push(`/login?redirect=/vote/${id}`);
@@ -48,9 +49,10 @@ const VotePage = ({ params }: { params: { slug: string } }) => {
   }, [id, userName, router]);
 
   const handleVote = async (index: number) => {
-    if (!voteData) return;
+    if (!voteData || isVoted) return;
 
     try {
+      setIsVoted(true);
       await fetch("/api/vote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -59,9 +61,12 @@ const VotePage = ({ params }: { params: { slug: string } }) => {
           voterName: userName
         }),
       });
+      
       router.push(`/vote/${id}/result`);
     } catch (error) {
       console.error("Failed to update vote:", error);
+    }finally{
+      setIsVoted(false);
     }
   };
 

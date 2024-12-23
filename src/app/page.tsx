@@ -38,12 +38,12 @@ const Home = () => {
             Vote for Fun
           </h1>
           <p className="text-gray-600 text-lg mb-8">
-            Tạo và chia sẻ cuộc bình chọn một cách dễ dàng
+            Tạo và chia sẻ cuộc bình chọn của bạn
           </p>
         </div>
 
         <div className="space-y-6">
-          <div className="relative">
+          {/* <div className="relative">
             <input
               type="text"
               placeholder="Nhập tên của bạn"
@@ -51,10 +51,11 @@ const Home = () => {
               onKeyPress={handleKeyPress}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
             />
-          </div>
+          </div> */}
 
           <button
-            onClick={handleLogin}
+            // onClick={handleLogin}
+            onClick={() => router.push("/create-vote")}
             className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-3 rounded-lg hover:opacity-90 transition duration-200 font-semibold text-lg shadow-md flex items-center justify-center group"
           >
             <span>Bắt đầu ngay</span>
@@ -68,7 +69,7 @@ const Home = () => {
             </svg>
           </button>
 
-          <div className="text-center text-gray-500 text-sm">
+          {/* <div className="text-center text-gray-500 text-sm">
             Hoặc
             <button
               onClick={() => router.push("/create-vote")}
@@ -76,7 +77,7 @@ const Home = () => {
             >
               tiếp tục mà không cần đăng nhập
             </button>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
