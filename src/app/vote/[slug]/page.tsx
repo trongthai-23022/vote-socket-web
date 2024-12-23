@@ -12,6 +12,7 @@ const VotePage = ({ params }: { params: { slug: string } }) => {
   const [copySuccess, setCopySuccess] = useState('');
   const userName = useUserStore(state => state.name);
   const [isVoted, setIsVoted] = useState(false);
+  const [loadingVoteIndex, setLoadingVoteIndex] = useState<number | null>(null);
   console.log(id);
   useEffect(() => {
     if (!userName) {
@@ -52,6 +53,7 @@ const VotePage = ({ params }: { params: { slug: string } }) => {
     if (!voteData || isVoted) return;
 
     try {
+      setLoadingVoteIndex(index);
       setIsVoted(true);
       await fetch("/api/vote", {
         method: "POST",
@@ -65,8 +67,8 @@ const VotePage = ({ params }: { params: { slug: string } }) => {
       router.push(`/vote/${id}/result`);
     } catch (error) {
       console.error("Failed to update vote:", error);
-    }finally{
       setIsVoted(false);
+      setLoadingVoteIndex(null);
     }
   };
 
@@ -108,17 +110,24 @@ const VotePage = ({ params }: { params: { slug: string } }) => {
               <button
                 key={option.id}
                 onClick={() => handleVote(index)}
-                className="w-full bg-white border-2 border-indigo-500 text-indigo-600 hover:bg-indigo-500 hover:text-white transition-all duration-200 px-6 py-4 rounded-lg text-lg font-semibold flex items-center justify-between group"
+                disabled={isVoted || loadingVoteIndex !== null}
+                className={`w-full bg-white border-2 border-indigo-500 text-indigo-600 hover:bg-indigo-500 hover:text-white transition-all duration-200 px-6 py-4 rounded-lg text-lg font-semibold flex items-center justify-between group ${
+                  isVoted || loadingVoteIndex !== null ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
                 <span>{option.option}</span>
-                <svg 
-                  className="w-6 h-6 transform group-hover:translate-x-1 transition-transform duration-200" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
+                {loadingVoteIndex === index ? (
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
+                ) : (
+                  <svg 
+                    className="w-6 h-6 transform group-hover:translate-x-1 transition-transform duration-200" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                )}
               </button>
             ))}
           </div>
