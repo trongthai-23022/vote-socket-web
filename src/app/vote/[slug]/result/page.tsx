@@ -23,6 +23,12 @@ interface VoteResult {
 
 Chart.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
+// Thêm hàm helper để rút gọn text
+const truncateText = (text: string, maxLength: number = 20) => {
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength) + '...';
+};
+
 export default function ResultPage({ params }: { params: { slug: string } }) {
   const [voteResults, setVoteResults] = useState<VoteResult[]>([]);
   const [voteData, setVoteData] = useState<VoteData | null>(null);
@@ -106,8 +112,9 @@ export default function ResultPage({ params }: { params: { slug: string } }) {
     };
   }, [params.slug]);
 
+  const voteFiltered = voteResults.filter(result => result.votes > 0);
   const chartData = {
-    labels: voteResults.map(result => result.option),
+    labels: voteResults.map(result => truncateText(result.option)),
     datasets: [
       {
         label: 'Số lượt bình chọn',
@@ -136,6 +143,7 @@ export default function ResultPage({ params }: { params: { slug: string } }) {
 
   const chartOptions = {
     responsive: true,
+    maintainAspectRatio: false, // Cho phép điều chỉnh kích thước linh hoạt
     plugins: {
       legend: {
         display: false,
@@ -143,14 +151,42 @@ export default function ResultPage({ params }: { params: { slug: string } }) {
       title: {
         display: false,
       },
+      tooltip: {
+        callbacks: {
+          // Hiển thị label đầy đủ trong tooltip
+          label: (context: any) => {
+            const index = context.dataIndex;
+            return `${voteResults[index].option}: ${context.formattedValue} lượt`;
+          }
+        }
+      }
     },
     scales: {
       y: {
         beginAtZero: true,
         ticks: {
           stepSize: 1,
+          font: {
+            size: 12
+          }
         },
+        grid: {
+          display: true,
+          color: 'rgba(0, 0, 0, 0.1)'
+        }
       },
+      x: {
+        ticks: {
+          font: {
+            size: 12
+          },
+          // maxRotation: 45,
+          // minRotation: 45
+        },
+        grid: {
+          display: false
+        }
+      }
     },
   };
 
@@ -219,29 +255,39 @@ export default function ResultPage({ params }: { params: { slug: string } }) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100">
       <div className="container mx-auto px-4 py-8 animate-fadeIn">
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-8 max-w-4xl mx-auto">
+        <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-xl p-8 max-w-4xl mx-auto">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-4">{voteData.title}</h1>
-            <p className="text-gray-600">Tổng số lượt bình chọn: {voteResults.reduce((acc, curr) => acc + curr.votes, 0)}</p>
+            <h1 className="text-3xl font-bold text-gray-800 mb-4 bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">
+              {voteData.title}
+            </h1>
+            <p className="text-gray-600 text-lg">
+              Tổng số lượt bình chọn: {' '}
+              <span className="font-semibold text-indigo-600">
+                {voteResults.reduce((acc, curr) => acc + curr.votes, 0)}
+              </span>
+            </p>
           </div>
 
-          <div className="mb-8">
+          <div className="mb-8 h-[400px]"> {/* Cố định chiều cao cho biểu đồ */}
             <Bar data={chartData} options={chartOptions} />
           </div>
 
           <div className="space-y-6">
-            {voteResults.map((result, index) => (
-              <div key={index} className="bg-white rounded-lg shadow p-6">
+            {voteFiltered.map((result, index) => (
+              <div 
+                key={index} 
+                className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-200 border border-gray-100"
+              >
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-800">{result.option}</h3>
-                  <span className="bg-indigo-100 text-indigo-800 py-1 px-3 rounded-full text-sm font-medium">
+                  <span className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-1.5 px-4 rounded-full text-sm font-medium">
                     {result.votes} lượt bình chọn
                   </span>
                 </div>
                 {result.voters.length > 0 && (
                   <div className="text-sm text-gray-600">
                     <span className="font-medium">Người đã bình chọn:</span>{' '}
-                    {result.voters.join(', ')}
+                    <span className="italic">{result.voters.join(', ')}</span>
                   </div>
                 )}
               </div>
@@ -251,7 +297,7 @@ export default function ResultPage({ params }: { params: { slug: string } }) {
           <div className="mt-8 flex justify-center">
             <button
               onClick={exportToExcel}
-              className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition-colors duration-200 font-medium flex items-center"
+              className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-8 py-3 rounded-lg transition-all duration-200 font-medium flex items-center shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />

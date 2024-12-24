@@ -57,12 +57,12 @@ export default function CreateVotePage() {
     }
   };
 
-  const handleToggleItem = (name: string) => {
+  const handleToggleItem = (name: string, price: string) => {
     setSelectedItems(prev => {
-      if (prev.includes(name)) {
-        return prev.filter(item => item !== name);
+      if (prev.includes(name + ' - ' + price)) {
+        return prev.filter(item => item !== name + ' - ' + price);
       } else {
-        return [...prev, name];
+        return [...prev, name + ' - ' + price];
       }
     });
   };
@@ -120,6 +120,15 @@ export default function CreateVotePage() {
     } catch (error: unknown) {
       console.error('Error:', error);
       setError('Không thể kết nối đến server');
+    }
+  };
+
+  const handleSelectAll = (selectAll: boolean) => {
+    if (selectAll) {
+      const allSelected = menuItems.map(item => item.name + ' - ' + item.price);
+      setSelectedItems(allSelected);
+    } else {
+      setSelectedItems([]);
     }
   };
 
@@ -239,14 +248,28 @@ export default function CreateVotePage() {
 
           {menuItems.length > 0 && (
             <div className="mt-8 animate-fadeIn">
+              <div className="flex items-center mb-4">
+                <input
+                  type="checkbox"
+                  id="select-all"
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                  className="hidden"
+                />
+                <label htmlFor="select-all" className="flex items-center cursor-pointer">
+                  <div className="w-5 h-5 border-2 border-gray-300 rounded-md flex items-center justify-center mr-2">
+                    <div className={`w-3 h-3 bg-indigo-500 rounded-md ${selectedItems.length === menuItems.length ? 'block' : 'hidden'}`}></div>
+                  </div>
+                  <span className="font-semibold">Chọn tất cả</span>
+                </label>
+              </div>
               <VoteCreationForm title={title} manualOptions={manualOptions} selectedItems={selectedItems} onCreateVote={handleCreateVote} />
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                 {menuItems.map((item, index) => (
                   <MenuItemCard 
                     key={index} 
                     item={item} 
-                    isSelected={selectedItems.includes(item.name)} 
-                    onToggle={handleToggleItem} 
+                    isSelected={selectedItems.includes(item.name + ' - ' + item.price)} 
+                    onToggle={(name) => handleToggleItem(item.name, item.price)} 
                   />
                 ))}
               </div>
